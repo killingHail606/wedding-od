@@ -1,0 +1,11 @@
+# Railway deployment config.
+# 1. Create a service from this repo (Railway auto-detects the Dockerfile).
+# 2. Add a Volume mounted at /data  → SQLite persists there.
+# 3. Set the environment variables listed in .env.example.
+
+[build]
+builder = "dockerfile"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -1,0 +1,1 @@
+ALTER TABLE `rsvps` ADD `wants_toast` integer DEFAULT false NOT NULL;

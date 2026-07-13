@@ -1,0 +1,168 @@
+/**
+ * Shared types available on both server and client (via the `#shared` alias).
+ * The whole editable site content is a single JSON document stored in SQLite
+ * and edited through the admin CMS.
+ */
+
+export interface CoupleContent {
+  brideName: string
+  groomName: string
+  /** Display order for the hero, e.g. "Дарʼя & Олександр" */
+  displayName: string
+}
+
+export interface EventContent {
+  /** ISO date-time in local Kyiv time, e.g. "2026-09-26T14:00:00+03:00" */
+  dateTime: string
+  /** Human label, e.g. "26 вересня 2026" */
+  dateLabel: string
+  timeLabel: string
+}
+
+export interface HeroContent {
+  photo: string
+  kicker: string
+  invitationLine: string
+}
+
+export interface GalleryPhoto {
+  src: string
+  alt: string
+  orientation: 'portrait' | 'landscape' | 'square'
+}
+
+export interface InvitationContent {
+  heading: string
+  paragraphs: string[]
+}
+
+export interface VenuePlace {
+  name: string
+  address: string
+  timeLabel?: string
+  lat: number
+  lng: number
+  googleMapsUrl: string
+  wazeUrl: string
+}
+
+export interface VenueContent {
+  banquet: VenuePlace
+  /** Ceremony is only revealed to guests invited to it. */
+  ceremony: VenuePlace
+}
+
+export interface TimelineItem {
+  time: string
+  title: string
+  description: string
+  /** Iconify name, e.g. "ph:champagne" */
+  icon: string
+  /** Only shown to guests invited to the ceremony. */
+  ceremony?: boolean
+}
+
+export interface DressCodeColor {
+  hex: string
+  label: string
+}
+
+export interface DressCodeContent {
+  description: string
+  colors: DressCodeColor[]
+}
+
+export interface GuestChatContent {
+  heading: string
+  text: string
+  buttonLabel: string
+  telegramUrl: string
+}
+
+export interface FooterContent {
+  coordinatorName: string
+  phone: string
+  telegram: string
+  thankYou: string
+  /** Background image for the footer. */
+  background: string
+}
+
+export interface RsvpContent {
+  /** ISO date after which the form closes. Empty string = no deadline. */
+  deadline: string
+  deadlineLabel: string
+  closedMessage: string
+}
+
+export interface WeddingContent {
+  couple: CoupleContent
+  event: EventContent
+  hero: HeroContent
+  gallery: GalleryPhoto[]
+  invitation: InvitationContent
+  venue: VenueContent
+  timeline: TimelineItem[]
+  dressCode: DressCodeContent
+  guestChat: GuestChatContent
+  footer: FooterContent
+  rsvp: RsvpContent
+}
+
+/**
+ * Content as delivered to the public page. The ceremony block is stripped to
+ * `null` for guests who are not invited to the ceremony (privacy).
+ */
+export type PublicContent = Omit<WeddingContent, 'venue'> & {
+  venue: { banquet: VenuePlace, ceremony: VenuePlace | null }
+}
+
+export interface SiteResponse {
+  content: PublicContent
+  guest: GuestPublic | null
+}
+
+/** A guest with a personalized invitation link. */
+export interface Guest {
+  id: number
+  token: string
+  firstName: string
+  lastName: string
+  invitedToCeremony: boolean
+  note: string | null
+  createdAt: string
+}
+
+/** Public-safe subset of a guest, sent to the client for personalization. */
+export interface GuestPublic {
+  firstName: string
+  lastName: string
+  invitedToCeremony: boolean
+}
+
+export interface RsvpEntry {
+  id: number
+  guestId: number | null
+  firstName: string
+  lastName: string
+  attending: boolean
+  withChildren: boolean
+  childrenCount: number
+  wantsToast: boolean
+  allergies: string | null
+  comment: string | null
+  createdAt: string
+}
+
+/** Payload accepted by POST /api/rsvp */
+export interface RsvpInput {
+  guestToken?: string
+  firstName: string
+  lastName: string
+  attending: boolean
+  withChildren: boolean
+  childrenCount: number
+  wantsToast: boolean
+  allergies?: string
+  comment?: string
+}
