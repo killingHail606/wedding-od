@@ -15,7 +15,9 @@ const dressCode = computed(() => content.value.dressCode)
       </RevealOnScroll>
 
       <RevealOnScroll :delay="220" class="w-full">
-        <ul class="mt-12 flex w-full flex-wrap items-center justify-center gap-5 sm:gap-7">
+        <!-- On phones the list is capped so exactly 4 circles fit per row
+             (→ 4 + 3), then centred; full width from sm up. -->
+        <ul class="mx-auto mt-12 flex max-w-[15.5rem] flex-wrap items-center justify-center gap-5 sm:max-w-none sm:gap-7">
           <li
             v-for="color in dressCode.colors"
             :key="color.hex"

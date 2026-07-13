@@ -15,7 +15,7 @@ const event = computed(() => content.value.event)
       <NuxtImg
         :src="hero.photo"
         alt=""
-        class="h-full w-full object-cover"
+        class="absolute inset-0 h-full w-full object-cover"
         sizes="100vw"
         preload
         fetchpriority="high"
