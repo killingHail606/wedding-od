@@ -27,6 +27,23 @@ export const guests = sqliteTable('guests', {
     .default(sql`(current_timestamp)`),
 })
 
+/**
+ * Wishlist books guests can choose to gift. A book is considered "reserved"
+ * once any RSVP references it (see `rsvps.giftBookId`) — there is no separate
+ * reservation state, keeping a single source of truth.
+ */
+export const books = sqliteTable('books', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  author: text('author'),
+  imageUrl: text('image_url'),
+  url: text('url'),
+  note: text('note'),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`(current_timestamp)`),
+})
+
 export const rsvps = sqliteTable('rsvps', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   guestId: integer('guest_id').references(() => guests.id, {
@@ -44,6 +61,10 @@ export const rsvps = sqliteTable('rsvps', {
     .default(false),
   allergies: text('allergies'),
   comment: text('comment'),
+  /** The wishlist book this guest chose to gift, if any. */
+  giftBookId: integer('gift_book_id').references(() => books.id, {
+    onDelete: 'set null',
+  }),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(current_timestamp)`),
@@ -52,3 +73,4 @@ export const rsvps = sqliteTable('rsvps', {
 export type SiteContentRow = typeof siteContent.$inferSelect
 export type GuestRow = typeof guests.$inferSelect
 export type RsvpRow = typeof rsvps.$inferSelect
+export type BookRow = typeof books.$inferSelect

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { RsvpRow } from '~~/server/db/schema'
 
+type RsvpWithBook = RsvpRow & { giftBookTitle: string | null }
+
 interface RsvpResponse {
   summary: { total: number, attending: number, declined: number, children: number }
-  rsvps: RsvpRow[]
+  rsvps: RsvpWithBook[]
 }
 
 const { data, pending, refresh } = await useFetch<RsvpResponse>('/api/admin/rsvps')
@@ -71,6 +73,7 @@ const stats = computed(() => [
             <th class="px-4 py-3">Діти</th>
             <th class="px-4 py-3">Тост</th>
             <th class="px-4 py-3">Алергії / харчування</th>
+            <th class="px-4 py-3">Книга</th>
             <th class="px-4 py-3">Коментар</th>
             <th class="px-4 py-3">Дата</th>
           </tr>
@@ -93,6 +96,7 @@ const stats = computed(() => [
             <td class="px-4 py-3">{{ r.withChildren ? r.childrenCount : '—' }}</td>
             <td class="px-4 py-3">{{ r.attending ? (r.wantsToast ? 'Так' : 'Ні') : '—' }}</td>
             <td class="px-4 py-3 text-cocoa">{{ r.allergies || '—' }}</td>
+            <td class="px-4 py-3 text-cocoa">{{ r.giftBookTitle || '—' }}</td>
             <td class="px-4 py-3 text-cocoa">{{ r.comment || '—' }}</td>
             <td class="px-4 py-3 whitespace-nowrap text-cocoa">{{ formatDate(r.createdAt) }}</td>
           </tr>

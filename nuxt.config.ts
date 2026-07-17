@@ -51,6 +51,10 @@ export default defineNuxtConfig({
   image: {
     format: ['avif', 'webp'],
     quality: 80,
+    // Remote hosts @nuxt/image is allowed to optimize. Without this an external
+    // URL yields a degenerate `1w, 2w` srcset and no intrinsic aspect ratio,
+    // which makes iOS Safari ignore object-fit and stretch the hero image.
+    domains: ['images.unsplash.com'],
   },
 
   icon: {

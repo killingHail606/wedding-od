@@ -1,4 +1,4 @@
-import { desc } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { schema, useDb } from '../../../db'
 
 function csvCell(value: unknown): string {
@@ -10,14 +10,26 @@ export default defineEventHandler((event) => {
   requireAdmin(event)
   const db = useDb()
   const rows = db
-    .select()
+    .select({
+      firstName: schema.rsvps.firstName,
+      lastName: schema.rsvps.lastName,
+      attending: schema.rsvps.attending,
+      withChildren: schema.rsvps.withChildren,
+      childrenCount: schema.rsvps.childrenCount,
+      wantsToast: schema.rsvps.wantsToast,
+      allergies: schema.rsvps.allergies,
+      comment: schema.rsvps.comment,
+      giftBookTitle: schema.books.title,
+      createdAt: schema.rsvps.createdAt,
+    })
     .from(schema.rsvps)
+    .leftJoin(schema.books, eq(schema.books.id, schema.rsvps.giftBookId))
     .orderBy(desc(schema.rsvps.createdAt))
     .all()
 
   const header = [
     'Імʼя', 'Прізвище', 'Присутність', 'З дітьми', 'Кількість дітей',
-    'Тост', 'Алергії', 'Коментар', 'Дата',
+    'Тост', 'Алергії', 'Книга', 'Коментар', 'Дата',
   ]
   const lines = rows.map(r => [
     r.firstName,
@@ -27,6 +39,7 @@ export default defineEventHandler((event) => {
     r.childrenCount,
     r.wantsToast ? 'Так' : 'Ні',
     r.allergies ?? '',
+    r.giftBookTitle ?? '',
     r.comment ?? '',
     r.createdAt,
   ].map(csvCell).join(','))

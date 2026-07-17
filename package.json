@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.23.0",
   "description": "Wedding invitation website — Дарʼя & Олександр",
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --host",
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",

@@ -8,6 +8,7 @@ import { dirname, resolve } from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { eq } from 'drizzle-orm'
+import { seedBooks } from '../../config/books.seed'
 import { defaultContent } from '../../config/wedding.config'
 import * as schema from './schema'
 
@@ -52,6 +53,16 @@ if (guestCount === 0) {
 }
 else {
   console.log(`• ${guestCount} guests already exist — skipping demo guests`)
+}
+
+// Wishlist books (only if none exist)
+const bookCount = db.select().from(schema.books).all().length
+if (bookCount === 0) {
+  db.insert(schema.books).values(seedBooks).run()
+  console.log(`✓ Seeded ${seedBooks.length} wishlist books`)
+}
+else {
+  console.log(`• ${bookCount} books already exist — skipping book seed`)
 }
 
 sqlite.close()

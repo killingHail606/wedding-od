@@ -5,6 +5,10 @@ const route = useRoute()
 const { content, guest } = useSite()
 const rsvp = computed(() => content.value.rsvp)
 
+// Wishlist books the guest can choose to gift.
+const { available, hasBooks, load: loadBooks } = useBooks()
+onMounted(() => loadBooks())
+
 // Deadline handling — form closes after the deadline day.
 const closed = computed(() => {
   if (!rsvp.value.deadline) return false
@@ -20,22 +24,35 @@ const form = reactive({
   childrenCount: 1,
   wantsToast: null as boolean | null,
   allergies: '',
+  giftBook: null as boolean | null,
+  giftBookId: null as number | null,
   comment: '',
 })
 
 const errors = reactive<Record<string, string>>({})
 const status = ref<'idle' | 'submitting' | 'success' | 'error'>('idle')
+const errorMessage = ref('')
+
+// Reset the chosen book if the guest switches away from "yes".
+watch(() => form.giftBook, (wants) => {
+  if (!wants) form.giftBookId = null
+})
 
 function validate(): boolean {
   errors.firstName = form.firstName.trim() ? '' : "Вкажіть, будь ласка, імʼя"
   errors.lastName = form.lastName.trim() ? '' : 'Вкажіть, будь ласка, прізвище'
   errors.attending = form.attending === null ? 'Оберіть один з варіантів' : ''
-  return !errors.firstName && !errors.lastName && !errors.attending
+  errors.giftBookId
+    = form.giftBook === true && !form.giftBookId ? 'Оберіть книгу зі списку' : ''
+  return (
+    !errors.firstName && !errors.lastName && !errors.attending && !errors.giftBookId
+  )
 }
 
 async function submit() {
   if (!validate()) return
   status.value = 'submitting'
+  errorMessage.value = ''
 
   const payload: RsvpInput = {
     guestToken: (route.query.guest as string) || undefined,
@@ -47,13 +64,28 @@ async function submit() {
     wantsToast: form.attending ? form.wantsToast === true : false,
     allergies: form.allergies.trim() || undefined,
     comment: form.comment.trim() || undefined,
+    giftBookId: form.giftBook === true ? form.giftBookId : null,
   }
 
   try {
     await $fetch('/api/rsvp', { method: 'POST', body: payload })
+    // Keep the shared wishlist in sync so the chosen book is now marked taken.
+    await loadBooks(true)
     status.value = 'success'
   }
-  catch {
+  catch (err: unknown) {
+    const e = err as { statusCode?: number, data?: { data?: { code?: string } } }
+    if (e?.statusCode === 409 || e?.data?.data?.code === 'BOOK_TAKEN') {
+      // Someone grabbed this book first — refresh and ask them to re-pick.
+      await loadBooks(true)
+      form.giftBookId = null
+      errorMessage.value
+        = 'На жаль, цю книгу щойно обрав хтось інший. Будь ласка, оберіть іншу зі списку.'
+    }
+    else {
+      errorMessage.value
+        = 'Не вдалося надіслати. Спробуйте ще раз або звʼяжіться з координатором.'
+    }
     status.value = 'error'
   }
 }
@@ -215,6 +247,52 @@ async function submit() {
           </div>
         </Transition>
 
+        <!-- Gift a book from the wishlist -->
+        <fieldset v-if="hasBooks">
+          <legend class="field-label">
+            Чи плануєте подарувати книгу для нашої бібліотеки?
+          </legend>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              class="rounded-lg border px-4 py-3 font-sans text-sm transition"
+              :class="form.giftBook === true
+                ? 'border-olive-500 bg-olive-100 text-olive-700'
+                : 'border-olive-200 bg-ivory/60 text-cocoa hover:border-olive-300'"
+              @click="form.giftBook = true"
+            >
+              <Icon name="ph:book-open" class="mr-1 inline h-4 w-4" />
+              Так, оберу книгу
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border px-4 py-3 font-sans text-sm transition"
+              :class="form.giftBook === false
+                ? 'border-olive-500 bg-olive-100 text-olive-700'
+                : 'border-olive-200 bg-ivory/60 text-cocoa hover:border-olive-300'"
+              @click="form.giftBook = false"
+            >
+              Ні / вирішу пізніше
+            </button>
+          </div>
+
+          <Transition name="expand">
+            <div v-if="form.giftBook === true" class="mt-4">
+              <label class="field-label">Оберіть книгу</label>
+              <BookSelect
+                v-model="form.giftBookId"
+                :options="available"
+                placeholder="Оберіть книгу зі списку…"
+              />
+              <p v-if="errors.giftBookId" class="field-error">{{ errors.giftBookId }}</p>
+              <p v-else class="mt-2 text-xs text-cocoa">
+                У списку лише вільні книги. Після надсилання форми обрана книга стане
+                недоступною для інших гостей.
+              </p>
+            </div>
+          </Transition>
+        </fieldset>
+
         <div>
           <label for="comment" class="field-label">Коментар (за бажанням)</label>
           <textarea
@@ -227,7 +305,7 @@ async function submit() {
         </div>
 
         <p v-if="status === 'error'" class="field-error text-center">
-          Не вдалося надіслати. Спробуйте ще раз або звʼяжіться з координатором.
+          {{ errorMessage }}
         </p>
 
         <AppButton type="submit" :disabled="status === 'submitting'" block class="mt-2">

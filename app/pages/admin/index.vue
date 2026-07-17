@@ -2,12 +2,13 @@
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 useHead({ title: 'Панель керування · Адмін' })
 
-type Tab = 'rsvp' | 'guests' | 'content'
+type Tab = 'rsvp' | 'guests' | 'books' | 'content'
 const tab = ref<Tab>('rsvp')
 
 const tabs: { id: Tab, label: string, icon: string }[] = [
   { id: 'rsvp', label: 'Відповіді (RSVP)', icon: 'ph:envelope-open' },
   { id: 'guests', label: 'Гості та запрошення', icon: 'ph:users-three' },
+  { id: 'books', label: 'Вішліст книг', icon: 'ph:books' },
   { id: 'content', label: 'Контент сайту', icon: 'ph:pencil-simple' },
 ]
 </script>
@@ -31,6 +32,7 @@ const tabs: { id: Tab, label: string, icon: string }[] = [
 
     <AdminRsvpTab v-if="tab === 'rsvp'" />
     <AdminGuestsTab v-else-if="tab === 'guests'" />
+    <AdminBooksTab v-else-if="tab === 'books'" />
     <AdminContentTab v-else />
   </div>
 </template>

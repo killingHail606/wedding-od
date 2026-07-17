@@ -151,6 +151,7 @@ export interface RsvpEntry {
   wantsToast: boolean
   allergies: string | null
   comment: string | null
+  giftBookId: number | null
   createdAt: string
 }
 
@@ -165,4 +166,18 @@ export interface RsvpInput {
   wantsToast: boolean
   allergies?: string
   comment?: string
+  /** id of the wishlist book the guest chose to gift, if any. */
+  giftBookId?: number | null
+}
+
+/** A wishlist book as delivered to the public page. */
+export interface BookPublic {
+  id: number
+  title: string
+  author: string | null
+  imageUrl: string | null
+  url: string | null
+  note: string | null
+  /** True once someone has chosen to gift this book. */
+  taken: boolean
 }

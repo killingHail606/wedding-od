@@ -1,6 +1,13 @@
 <script setup lang="ts">
 // Static wishes about gifts & flowers. Text is intentionally hardcoded —
 // it rarely changes and isn't part of the editable CMS content.
+const { hasBooks, load } = useBooks()
+
+// Preload the wishlist so the "view list" button only appears when there is
+// actually something to show.
+onMounted(() => load())
+
+const showBooks = ref(false)
 </script>
 
 <template>
@@ -27,9 +34,21 @@
               в'януть, тому, якщо ви планували букет, будемо раді, якщо замість нього
               ви оберете книгу, яка стане частиною нашої домашньої бібліотеки ❤️
             </p>
+
+            <AppButton
+              v-if="hasBooks"
+              variant="outline"
+              class="mt-6"
+              @click="showBooks = true"
+            >
+              <Icon name="ph:books" class="h-4 w-4" />
+              Переглянути список книг
+            </AppButton>
           </div>
         </RevealOnScroll>
       </div>
     </div>
+
+    <BooksModal :open="showBooks" @close="showBooks = false" />
   </SectionShell>
 </template>
