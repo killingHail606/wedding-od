@@ -74,16 +74,23 @@ const { direction } = useSwipe(stage, {
           <Icon name="ph:caret-left" class="h-8 w-8" />
         </button>
 
+        <!--
+          The image is a plain block element (not a flex child): Safari has a
+          long-standing flexbox bug that collapses an <img> flex item's width
+          and squishes it into a vertical strip. Centering is handled by the
+          overlay's flex above; the image keeps its aspect via max-w/max-h.
+        -->
         <div
           ref="stage"
-          class="flex h-[86svh] w-[92vw] items-center justify-center px-2"
+          class="px-2"
           @click.self="emit('close')"
         >
           <NuxtImg
             :key="current.src"
             :src="current.src"
             :alt="current.alt"
-            class="max-h-full max-w-full rounded-sm object-contain shadow-2xl"
+            class="mx-auto block h-auto w-auto rounded-sm object-contain shadow-2xl"
+            style="max-height: 86svh; max-width: 92vw;"
             sizes="92vw"
           />
         </div>
