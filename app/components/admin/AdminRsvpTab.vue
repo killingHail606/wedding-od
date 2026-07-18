@@ -15,6 +15,23 @@ interface RsvpResponse {
 
 const { data, pending, refresh } = await useFetch<RsvpResponse>('/api/admin/rsvps')
 
+const deletingId = ref<number | null>(null)
+async function remove(r: RsvpWithBook) {
+  const who = `${r.firstName} ${r.lastName}`.trim()
+  const bookNote = r.giftBookTitle
+    ? `\n\nБронь на книгу «${r.giftBookTitle}» буде звільнена.`
+    : ''
+  if (!confirm(`Видалити відповідь від ${who}?${bookNote}`)) return
+  deletingId.value = r.id
+  try {
+    await $fetch(`/api/admin/rsvps/${r.id}`, { method: 'DELETE' })
+    await refresh()
+  }
+  finally {
+    deletingId.value = null
+  }
+}
+
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat('uk-UA', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -82,6 +99,7 @@ const stats = computed(() => [
             <th class="px-4 py-3">Книга</th>
             <th class="px-4 py-3">Коментар</th>
             <th class="px-4 py-3">Дата</th>
+            <th class="px-4 py-3" />
           </tr>
         </thead>
         <tbody>
@@ -106,6 +124,15 @@ const stats = computed(() => [
             <td class="px-4 py-3 text-cocoa">{{ r.giftBookTitle || '—' }}</td>
             <td class="px-4 py-3 text-cocoa">{{ r.comment || '—' }}</td>
             <td class="px-4 py-3 whitespace-nowrap text-cocoa">{{ formatDate(r.createdAt) }}</td>
+            <td class="px-4 py-3 text-right">
+              <button
+                class="rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30 disabled:opacity-50"
+                :disabled="deletingId === r.id"
+                @click="remove(r)"
+              >
+                {{ deletingId === r.id ? '…' : 'Видалити' }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
