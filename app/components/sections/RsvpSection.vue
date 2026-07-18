@@ -304,6 +304,9 @@ async function submit() {
           <legend class="field-label">
             Чи плануєте подарувати книгу для нашої бібліотеки?
           </legend>
+          <p class="mb-3 text-sm text-cocoa">
+            Хочете подарувати книгу — оберіть і заброньте її тут, щоб ніхто не обрав ту саму.
+          </p>
           <div class="grid grid-cols-2 gap-3">
             <button
               type="button"
