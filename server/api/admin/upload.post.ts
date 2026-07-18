@@ -33,8 +33,14 @@ export default defineEventHandler(async (event) => {
   const dir = ensureUploadsDir()
   await writeFile(join(dir, name), file.data)
 
-  // Absolute same-origin URL so @nuxt/image can optimize it (the site's own
-  // host is allow-listed in image.domains).
-  const siteUrl = useRuntimeConfig().public.siteUrl.replace(/\/$/, '')
-  return { url: `${siteUrl}/uploads/${name}` }
+  // Build the URL from the actual request origin (honouring proxy headers in
+  // production) rather than a hard-coded siteUrl. This keeps the uploaded image
+  // reachable on whatever host/port the site is really served from — otherwise
+  // a dev server on a different port than NUXT_PUBLIC_SITE_URL yields a broken
+  // link locally.
+  const origin = getRequestURL(event, {
+    xForwardedHost: true,
+    xForwardedProto: true,
+  }).origin
+  return { url: `${origin}/uploads/${name}` }
 })

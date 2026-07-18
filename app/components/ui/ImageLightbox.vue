@@ -75,23 +75,24 @@ const { direction } = useSwipe(stage, {
         </button>
 
         <!--
-          The stage has a DEFINITE size and the image fills it with
-          object-contain. This avoids Safari squishing: with no `auto`
-          dimension there is nothing to collapse, and object-contain always
-          preserves the image's aspect ratio (letterboxing within the box).
+          A plain <img> (not <NuxtImg>) on purpose: uploaded images are served
+          from our own host, which is intentionally NOT in image.domains, so
+          @nuxt/image passes them through with a degenerate srcset and no
+          intrinsic aspect ratio — and iOS Safari then ignores object-fit and
+          squishes the picture. A native <img> loads the real file with real
+          dimensions, so max-w/max-h + object-contain scale it correctly.
         -->
         <div
           ref="stage"
-          class="h-[86svh] w-[92vw] px-2"
+          class="px-2"
           @click.self="emit('close')"
         >
-          <NuxtImg
+          <img
             :key="current.src"
             :src="current.src"
             :alt="current.alt"
-            class="block h-full w-full object-contain"
-            sizes="92vw"
-          />
+            class="mx-auto block max-h-[86svh] max-w-[92vw] rounded-sm object-contain shadow-2xl"
+          >
         </div>
 
         <button
