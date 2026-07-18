@@ -93,6 +93,10 @@ export interface RsvpContent {
   deadline: string
   deadlineLabel: string
   closedMessage: string
+  /** Heading/question above the gift-a-book choice in the form. */
+  giftQuestion: string
+  /** Hint text under the gift-a-book question. */
+  giftHint: string
 }
 
 export interface WeddingContent {
@@ -176,8 +180,8 @@ export interface RsvpInput {
   withPartner?: boolean
   partnerFirstName?: string
   partnerLastName?: string
-  /** id of the wishlist book the guest chose to gift, if any. */
-  giftBookId?: number | null
+  /** ids of the wishlist books the guest chose to gift, if any. */
+  giftBookIds?: number[]
 }
 
 /** A wishlist book as delivered to the public page. */

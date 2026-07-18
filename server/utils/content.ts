@@ -14,7 +14,14 @@ export function getContent(): WeddingContent {
 
   if (!row) return defaultContent
   try {
-    return JSON.parse(row.data) as WeddingContent
+    const stored = JSON.parse(row.data) as WeddingContent
+    // Fill in any newly-introduced fields from defaults so older stored
+    // documents stay valid (e.g. the editable gift-book texts).
+    return {
+      ...defaultContent,
+      ...stored,
+      rsvp: { ...defaultContent.rsvp, ...stored.rsvp },
+    }
   }
   catch {
     return defaultContent

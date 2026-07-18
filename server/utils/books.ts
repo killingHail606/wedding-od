@@ -1,16 +1,15 @@
 import type { BookPublic } from '#shared/types'
-import { asc, isNotNull } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 import { schema, useDb } from '../db'
 
 /** Set of book ids that are already reserved by at least one RSVP. */
 export function getReservedBookIds(): Set<number> {
   const db = useDb()
   const rows = db
-    .selectDistinct({ giftBookId: schema.rsvps.giftBookId })
-    .from(schema.rsvps)
-    .where(isNotNull(schema.rsvps.giftBookId))
+    .selectDistinct({ bookId: schema.rsvpBooks.bookId })
+    .from(schema.rsvpBooks)
     .all()
-  return new Set(rows.map(r => r.giftBookId!).filter(Boolean))
+  return new Set(rows.map(r => r.bookId))
 }
 
 /** All wishlist books with their public reservation status. */

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 /**
  * The full editable site content is stored as a single JSON document.
@@ -79,7 +79,26 @@ export const rsvps = sqliteTable('rsvps', {
     .default(sql`(current_timestamp)`),
 })
 
+/**
+ * Books a single RSVP chose to gift. A guest may pick several books, so the
+ * relationship is many-to-many. A book counts as "reserved" once any row here
+ * references it. Rows cascade away when either the RSVP or the book is removed.
+ */
+export const rsvpBooks = sqliteTable(
+  'rsvp_books',
+  {
+    rsvpId: integer('rsvp_id')
+      .notNull()
+      .references(() => rsvps.id, { onDelete: 'cascade' }),
+    bookId: integer('book_id')
+      .notNull()
+      .references(() => books.id, { onDelete: 'cascade' }),
+  },
+  t => [primaryKey({ columns: [t.rsvpId, t.bookId] })],
+)
+
 export type SiteContentRow = typeof siteContent.$inferSelect
 export type GuestRow = typeof guests.$inferSelect
 export type RsvpRow = typeof rsvps.$inferSelect
 export type BookRow = typeof books.$inferSelect
+export type RsvpBookRow = typeof rsvpBooks.$inferSelect

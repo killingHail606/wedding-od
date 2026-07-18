@@ -67,5 +67,7 @@ export const weddingContentSchema = z.object({
     deadline: z.string(),
     deadlineLabel: z.string(),
     closedMessage: z.string(),
+    giftQuestion: z.string(),
+    giftHint: z.string(),
   }),
 })

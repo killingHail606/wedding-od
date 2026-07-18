@@ -19,14 +19,33 @@ export default defineEventHandler((event) => {
       withPartner: schema.rsvps.withPartner,
       partnerFirstName: schema.rsvps.partnerFirstName,
       partnerLastName: schema.rsvps.partnerLastName,
-      giftBookId: schema.rsvps.giftBookId,
-      giftBookTitle: schema.books.title,
       createdAt: schema.rsvps.createdAt,
     })
     .from(schema.rsvps)
-    .leftJoin(schema.books, eq(schema.books.id, schema.rsvps.giftBookId))
     .orderBy(desc(schema.rsvps.createdAt))
     .all()
+
+  // Gift books per RSVP (many-to-many).
+  const bookRows = db
+    .select({
+      rsvpId: schema.rsvpBooks.rsvpId,
+      title: schema.books.title,
+    })
+    .from(schema.rsvpBooks)
+    .innerJoin(schema.books, eq(schema.books.id, schema.rsvpBooks.bookId))
+    .all()
+
+  const booksByRsvp = new Map<number, string[]>()
+  for (const b of bookRows) {
+    const list = booksByRsvp.get(b.rsvpId) ?? []
+    list.push(b.title)
+    booksByRsvp.set(b.rsvpId, list)
+  }
+
+  const rsvps = rows.map(r => ({
+    ...r,
+    giftBooks: booksByRsvp.get(r.id) ?? [],
+  }))
 
   const attending = rows.filter(r => r.attending)
   const summary = {
@@ -37,5 +56,5 @@ export default defineEventHandler((event) => {
     children: attending.reduce((sum, r) => sum + r.childrenCount, 0),
   }
 
-  return { summary, rsvps: rows }
+  return { summary, rsvps }
 })

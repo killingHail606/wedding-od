@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import type { RsvpRow } from '~~/server/db/schema'
 
-type RsvpWithBook = RsvpRow & { giftBookTitle: string | null }
+type RsvpWithBook = Omit<RsvpRow, 'giftBookId'> & { giftBooks: string[] }
 
 function partnerName(r: RsvpWithBook) {
   if (!r.withPartner) return '—'
   return `${r.partnerFirstName ?? ''} ${r.partnerLastName ?? ''}`.trim() || 'Так'
+}
+
+/** Only the detail fields that actually have a value, for a tidy card. */
+function details(r: RsvpWithBook): { label: string, value: string }[] {
+  const items: { label: string, value: string }[] = []
+  if (r.withPartner) items.push({ label: 'Друга половинка', value: partnerName(r) })
+  if (r.attending && r.withChildren) {
+    items.push({ label: 'Діти', value: String(r.childrenCount) })
+  }
+  if (r.attending && r.wantsToast) items.push({ label: 'Тост', value: 'Так' })
+  if (r.allergies) items.push({ label: 'Алергії / харчування', value: r.allergies })
+  return items
 }
 
 interface RsvpResponse {
@@ -18,8 +30,8 @@ const { data, pending, refresh } = await useFetch<RsvpResponse>('/api/admin/rsvp
 const deletingId = ref<number | null>(null)
 async function remove(r: RsvpWithBook) {
   const who = `${r.firstName} ${r.lastName}`.trim()
-  const bookNote = r.giftBookTitle
-    ? `\n\nБронь на книгу «${r.giftBookTitle}» буде звільнена.`
+  const bookNote = r.giftBooks.length
+    ? `\n\nБронь на книги (${r.giftBooks.join(', ')}) буде звільнена.`
     : ''
   if (!confirm(`Видалити відповідь від ${who}?${bookNote}`)) return
   deletingId.value = r.id
@@ -86,56 +98,72 @@ const stats = computed(() => [
       Поки що немає жодної відповіді.
     </div>
 
-    <div v-else class="overflow-x-auto rounded-xl border border-olive-200 bg-ivory">
-      <table class="w-full min-w-[720px] text-left text-sm">
-        <thead class="border-b border-olive-200 text-xs tracking-wide text-cocoa uppercase">
-          <tr>
-            <th class="px-4 py-3">Гість</th>
-            <th class="px-4 py-3">Присутність</th>
-            <th class="px-4 py-3">Друга половинка</th>
-            <th class="px-4 py-3">Діти</th>
-            <th class="px-4 py-3">Тост</th>
-            <th class="px-4 py-3">Алергії / харчування</th>
-            <th class="px-4 py-3">Книга</th>
-            <th class="px-4 py-3">Коментар</th>
-            <th class="px-4 py-3">Дата</th>
-            <th class="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="r in data.rsvps"
-            :key="r.id"
-            class="border-b border-olive-100 last:border-0"
-          >
-            <td class="px-4 py-3 font-medium">{{ r.firstName }} {{ r.lastName }}</td>
-            <td class="px-4 py-3">
+    <div v-else class="grid gap-3">
+      <article
+        v-for="r in data.rsvps"
+        :key="r.id"
+        class="rounded-xl border border-olive-200 bg-ivory p-4 sm:p-5"
+      >
+        <!-- Header: name + status + date + delete -->
+        <header class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-serif text-lg leading-tight text-espresso">
+                {{ r.firstName }} {{ r.lastName }}
+              </h3>
               <span
-                class="rounded-full px-2.5 py-1 text-xs"
+                class="rounded-full px-2.5 py-0.5 text-xs"
                 :class="r.attending ? 'bg-olive-100 text-olive-700' : 'bg-blush/40 text-espresso'"
               >
                 {{ r.attending ? 'Буде' : 'Не буде' }}
               </span>
-            </td>
-            <td class="px-4 py-3 text-cocoa">{{ partnerName(r) }}</td>
-            <td class="px-4 py-3">{{ r.withChildren ? r.childrenCount : '—' }}</td>
-            <td class="px-4 py-3">{{ r.attending ? (r.wantsToast ? 'Так' : 'Ні') : '—' }}</td>
-            <td class="px-4 py-3 text-cocoa">{{ r.allergies || '—' }}</td>
-            <td class="px-4 py-3 text-cocoa">{{ r.giftBookTitle || '—' }}</td>
-            <td class="px-4 py-3 text-cocoa">{{ r.comment || '—' }}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-cocoa">{{ formatDate(r.createdAt) }}</td>
-            <td class="px-4 py-3 text-right">
-              <button
-                class="rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30 disabled:opacity-50"
-                :disabled="deletingId === r.id"
-                @click="remove(r)"
-              >
-                {{ deletingId === r.id ? '…' : 'Видалити' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            <p class="mt-1 text-xs text-cocoa/80">{{ formatDate(r.createdAt) }}</p>
+          </div>
+
+          <button
+            class="shrink-0 rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30 disabled:opacity-50"
+            :disabled="deletingId === r.id"
+            @click="remove(r)"
+          >
+            {{ deletingId === r.id ? '…' : 'Видалити' }}
+          </button>
+        </header>
+
+        <!-- Detail fields (only those with a value) -->
+        <dl
+          v-if="details(r).length"
+          class="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <div v-for="d in details(r)" :key="d.label">
+            <dt class="text-xs tracking-wide text-cocoa/70 uppercase">{{ d.label }}</dt>
+            <dd class="mt-0.5 text-sm text-espresso">{{ d.value }}</dd>
+          </div>
+        </dl>
+
+        <!-- Books as chips -->
+        <div v-if="r.giftBooks.length" class="mt-4">
+          <p class="text-xs tracking-wide text-cocoa/70 uppercase">
+            Книги у подарунок · {{ r.giftBooks.length }}
+          </p>
+          <ul class="mt-1.5 flex flex-wrap gap-1.5">
+            <li
+              v-for="(title, i) in r.giftBooks"
+              :key="i"
+              class="inline-flex items-center gap-1.5 rounded-full border border-olive-200 bg-cream/50 px-3 py-1 text-xs text-espresso"
+            >
+              <Icon name="ph:book" class="h-3.5 w-3.5 text-olive-500" />
+              {{ title }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Comment -->
+        <div v-if="r.comment" class="mt-4 rounded-lg bg-olive-50 px-3 py-2">
+          <p class="text-xs tracking-wide text-cocoa/70 uppercase">Коментар</p>
+          <p class="mt-0.5 text-sm whitespace-pre-line text-espresso">{{ r.comment }}</p>
+        </div>
+      </article>
     </div>
   </div>
 </template>

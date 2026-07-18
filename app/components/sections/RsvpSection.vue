@@ -31,7 +31,7 @@ const form = reactive({
   partnerFirstName: guest.value?.partnerFirstName ?? '',
   partnerLastName: guest.value?.partnerLastName ?? '',
   giftBook: null as boolean | null,
-  giftBookId: null as number | null,
+  giftBookIds: [] as number[],
   comment: '',
 })
 
@@ -39,24 +39,26 @@ const errors = reactive<Record<string, string>>({})
 const status = ref<'idle' | 'submitting' | 'success' | 'error'>('idle')
 const errorMessage = ref('')
 
-// Reset the chosen book if the guest switches away from "yes".
+// Reset the chosen books if the guest switches away from "yes".
 watch(() => form.giftBook, (wants) => {
-  if (!wants) form.giftBookId = null
+  if (!wants) form.giftBookIds = []
 })
 
 function validate(): boolean {
   errors.firstName = form.firstName.trim() ? '' : "Вкажіть, будь ласка, імʼя"
   errors.lastName = form.lastName.trim() ? '' : 'Вкажіть, будь ласка, прізвище'
   errors.attending = form.attending === null ? 'Оберіть один з варіантів' : ''
-  errors.giftBookId
-    = form.giftBook === true && !form.giftBookId ? 'Оберіть книгу зі списку' : ''
+  errors.giftBookIds
+    = form.giftBook === true && !form.giftBookIds.length
+      ? 'Оберіть хоча б одну книгу зі списку'
+      : ''
   errors.partnerFirstName
     = form.attending === true && form.withPartner && !form.partnerFirstName.trim()
       ? 'Вкажіть імʼя другої половинки'
       : ''
   return (
     !errors.firstName && !errors.lastName && !errors.attending
-    && !errors.giftBookId && !errors.partnerFirstName
+    && !errors.giftBookIds && !errors.partnerFirstName
   )
 }
 
@@ -78,7 +80,7 @@ async function submit() {
     partnerFirstName: form.attending && form.withPartner ? form.partnerFirstName.trim() : undefined,
     partnerLastName: form.attending && form.withPartner ? form.partnerLastName.trim() || undefined : undefined,
     comment: form.comment.trim() || undefined,
-    giftBookId: form.giftBook === true ? form.giftBookId : null,
+    giftBookIds: form.giftBook === true ? form.giftBookIds : [],
   }
 
   try {
@@ -90,11 +92,13 @@ async function submit() {
   catch (err: unknown) {
     const e = err as { statusCode?: number, data?: { data?: { code?: string } } }
     if (e?.statusCode === 409 || e?.data?.data?.code === 'BOOK_TAKEN') {
-      // Someone grabbed this book first — refresh and ask them to re-pick.
+      // Someone grabbed one of these books first — refresh and ask to re-pick.
       await loadBooks(true)
-      form.giftBookId = null
+      form.giftBookIds = form.giftBookIds.filter(id =>
+        available.value.some(b => b.id === id),
+      )
       errorMessage.value
-        = 'На жаль, цю книгу щойно обрав хтось інший. Будь ласка, оберіть іншу зі списку.'
+        = 'На жаль, одну з обраних книг щойно взяв хтось інший. Будь ласка, перевірте список і оберіть знову.'
     }
     else {
       errorMessage.value
@@ -302,10 +306,10 @@ async function submit() {
         <!-- Gift a book from the wishlist -->
         <fieldset v-if="hasBooks">
           <legend class="field-label">
-            Чи плануєте подарувати книгу для нашої бібліотеки?
+            {{ rsvp.giftQuestion }}
           </legend>
-          <p class="mb-3 text-sm text-cocoa">
-            Хочете подарувати книгу — оберіть і заброньте її тут, щоб ніхто не обрав ту саму.
+          <p v-if="rsvp.giftHint" class="mb-3 text-sm text-cocoa">
+            {{ rsvp.giftHint }}
           </p>
           <div class="grid grid-cols-2 gap-3">
             <button
@@ -334,16 +338,17 @@ async function submit() {
 
           <Transition name="expand">
             <div v-if="form.giftBook === true" class="mt-4">
-              <label class="field-label">Оберіть книгу</label>
+              <label class="field-label">Оберіть книги</label>
               <BookSelect
-                v-model="form.giftBookId"
+                v-model="form.giftBookIds"
+                multiple
                 :options="available"
-                placeholder="Оберіть книгу зі списку…"
+                placeholder="Оберіть книги зі списку…"
               />
-              <p v-if="errors.giftBookId" class="field-error">{{ errors.giftBookId }}</p>
+              <p v-if="errors.giftBookIds" class="field-error">{{ errors.giftBookIds }}</p>
               <p v-else class="mt-2 text-xs text-cocoa">
-                У списку лише вільні книги. Після надсилання форми обрана книга стане
-                недоступною для інших гостей.
+                Можна обрати одразу декілька книг. У списку лише вільні книги —
+                після надсилання форми обрані книги стануть недоступними для інших гостей.
               </p>
             </div>
           </Transition>

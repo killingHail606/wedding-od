@@ -30,7 +30,8 @@ export default defineEventHandler((event): AdminBook[] => {
       reservedLast: schema.rsvps.lastName,
     })
     .from(schema.books)
-    .leftJoin(schema.rsvps, eq(schema.rsvps.giftBookId, schema.books.id))
+    .leftJoin(schema.rsvpBooks, eq(schema.rsvpBooks.bookId, schema.books.id))
+    .leftJoin(schema.rsvps, eq(schema.rsvps.id, schema.rsvpBooks.rsvpId))
     .orderBy(asc(schema.books.createdAt))
     .all()
 

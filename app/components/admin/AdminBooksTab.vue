@@ -21,6 +21,42 @@ async function create() {
   }
 }
 
+// Inline editing of an existing book.
+const editingId = ref<number | null>(null)
+const editDraft = reactive({ title: '', author: '', imageUrl: '', url: '', note: '' })
+const saving = ref(false)
+
+function startEdit(book: AdminBook) {
+  editingId.value = book.id
+  Object.assign(editDraft, {
+    title: book.title,
+    author: book.author ?? '',
+    imageUrl: book.imageUrl ?? '',
+    url: book.url ?? '',
+    note: book.note ?? '',
+  })
+}
+
+function cancelEdit() {
+  editingId.value = null
+}
+
+async function saveEdit() {
+  if (editingId.value === null || !editDraft.title.trim()) return
+  saving.value = true
+  try {
+    await $fetch(`/api/admin/books/${editingId.value}`, {
+      method: 'PATCH',
+      body: { ...editDraft },
+    })
+    editingId.value = null
+    await refresh()
+  }
+  finally {
+    saving.value = false
+  }
+}
+
 async function remove(book: AdminBook) {
   const warn = book.reservedBy
     ? `Книгу «${book.title}» вже обрав(-ла) ${book.reservedBy}. Все одно видалити?`
@@ -88,9 +124,39 @@ const availableCount = computed(
         <li
           v-for="b in books"
           :key="b.id"
-          class="flex flex-col gap-3 rounded-xl border border-olive-200 bg-ivory p-4 sm:flex-row sm:items-center sm:justify-between"
-          :class="b.reservedBy ? 'opacity-70' : ''"
+          class="rounded-xl border border-olive-200 bg-ivory p-4"
+          :class="b.reservedBy && editingId !== b.id ? 'opacity-70' : ''"
         >
+          <!-- Edit mode -->
+          <form
+            v-if="editingId === b.id"
+            class="grid gap-4 sm:grid-cols-2"
+            @submit.prevent="saveEdit"
+          >
+            <AdminField v-model="editDraft.title" label="Назва книги" />
+            <AdminField v-model="editDraft.author" label="Автор (за бажанням)" />
+            <AdminField v-model="editDraft.url" label="Посилання (за бажанням)" placeholder="https://…" />
+            <AdminField v-model="editDraft.imageUrl" label="Обкладинка — URL (за бажанням)" placeholder="https://…/cover.jpg" />
+            <div class="sm:col-span-2">
+              <AdminField v-model="editDraft.note" label="Примітка (за бажанням)" />
+            </div>
+            <div class="flex gap-2 sm:col-span-2">
+              <AppButton type="submit" :disabled="saving">
+                <Icon name="ph:check" class="h-4 w-4" />
+                {{ saving ? 'Зберігаємо…' : 'Зберегти' }}
+              </AppButton>
+              <button
+                type="button"
+                class="rounded-full border border-olive-300 px-4 py-1.5 text-sm text-olive-700 transition hover:bg-olive-100"
+                @click="cancelEdit"
+              >
+                Скасувати
+              </button>
+            </div>
+          </form>
+
+          <!-- Display mode -->
+          <div v-else class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 items-center gap-4">
             <div class="h-16 w-12 shrink-0 overflow-hidden rounded border border-olive-200 bg-olive-50">
               <img
@@ -131,11 +197,18 @@ const availableCount = computed(
 
           <div class="flex shrink-0 items-center gap-2">
             <button
+              class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
+              @click="startEdit(b)"
+            >
+              Змінити
+            </button>
+            <button
               class="rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30"
               @click="remove(b)"
             >
               Видалити
             </button>
+          </div>
           </div>
         </li>
       </ul>

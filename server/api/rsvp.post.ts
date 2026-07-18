@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { schema, useDb } from '../db'
 
@@ -15,6 +15,9 @@ const rsvpSchema = z.object({
   withPartner: z.boolean().default(false),
   partnerFirstName: z.string().trim().max(80).optional(),
   partnerLastName: z.string().trim().max(80).optional(),
+  // A guest may gift several books at once. Older single-book clients can still
+  // send `giftBookId`; it is merged into `giftBookIds` below.
+  giftBookIds: z.array(z.number().int().positive()).max(50).default([]),
   giftBookId: z.number().int().positive().nullish(),
 })
 
@@ -45,28 +48,37 @@ export default defineEventHandler(async (event) => {
 
   const db = useDb()
 
-  // Validate & reserve a wishlist book, if one was chosen. The book must exist
-  // and not already be taken by another guest — otherwise reject so the client
-  // can refresh the list.
-  let giftBook: { id: number, title: string } | undefined
-  if (input.giftBookId) {
-    const book = db
-      .select()
-      .from(schema.books)
-      .where(eq(schema.books.id, input.giftBookId))
-      .get()
+  // Collect the chosen book ids (dedup, tolerate the legacy single field).
+  const requestedIds = [
+    ...new Set([
+      ...input.giftBookIds,
+      ...(input.giftBookId ? [input.giftBookId] : []),
+    ]),
+  ]
 
-    if (!book) {
+  // Validate & reserve the chosen wishlist books. Each must exist and not
+  // already be taken by another guest — otherwise reject so the client can
+  // refresh the list and re-pick.
+  let giftBooks: { id: number, title: string }[] = []
+  if (requestedIds.length) {
+    const found = db
+      .select({ id: schema.books.id, title: schema.books.title })
+      .from(schema.books)
+      .where(inArray(schema.books.id, requestedIds))
+      .all()
+
+    if (found.length !== requestedIds.length) {
       throw createError({ statusCode: 404, statusMessage: 'Book not found' })
     }
-    if (getReservedBookIds().has(book.id)) {
+    const reserved = getReservedBookIds()
+    if (found.some(b => reserved.has(b.id))) {
       throw createError({
         statusCode: 409,
         statusMessage: 'Book already reserved',
         data: { code: 'BOOK_TAKEN' },
       })
     }
-    giftBook = { id: book.id, title: book.title }
+    giftBooks = found
   }
 
   const inserted = db
@@ -84,10 +96,15 @@ export default defineEventHandler(async (event) => {
       withPartner,
       partnerFirstName,
       partnerLastName,
-      giftBookId: giftBook?.id ?? null,
     })
     .returning()
     .get()
+
+  if (giftBooks.length) {
+    db.insert(schema.rsvpBooks)
+      .values(giftBooks.map(b => ({ rsvpId: inserted.id, bookId: b.id })))
+      .run()
+  }
 
   // Best-effort Telegram notification.
   const status = input.attending ? '✅ Буде присутній(-я)' : '❌ Не зможе бути'
@@ -100,7 +117,9 @@ export default defineEventHandler(async (event) => {
   if (input.attending && input.withChildren) lines.push(`👶 Дітей: ${childrenCount}`)
   if (input.attending && input.wantsToast) lines.push('🎤 Хоче сказати тост')
   if (input.allergies) lines.push(`🍽 Алергії: ${input.allergies}`)
-  if (giftBook) lines.push(`📚 Книга у подарунок: ${giftBook.title}`)
+  if (giftBooks.length) {
+    lines.push(`📚 Книги у подарунок: ${giftBooks.map(b => b.title).join(', ')}`)
+  }
   if (input.comment) lines.push(`💬 ${input.comment}`)
   if (guest) lines.push(`🔗 Гість: ${guest.firstName} ${guest.lastName}`)
   await notifyTelegram(lines.join('\n'))

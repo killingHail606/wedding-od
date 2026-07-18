@@ -11,6 +11,7 @@ export default defineEventHandler((event) => {
   const db = useDb()
   const rows = db
     .select({
+      id: schema.rsvps.id,
       firstName: schema.rsvps.firstName,
       lastName: schema.rsvps.lastName,
       attending: schema.rsvps.attending,
@@ -22,13 +23,24 @@ export default defineEventHandler((event) => {
       wantsToast: schema.rsvps.wantsToast,
       allergies: schema.rsvps.allergies,
       comment: schema.rsvps.comment,
-      giftBookTitle: schema.books.title,
       createdAt: schema.rsvps.createdAt,
     })
     .from(schema.rsvps)
-    .leftJoin(schema.books, eq(schema.books.id, schema.rsvps.giftBookId))
     .orderBy(desc(schema.rsvps.createdAt))
     .all()
+
+  // Gift books per RSVP (many-to-many), joined into one cell.
+  const bookRows = db
+    .select({ rsvpId: schema.rsvpBooks.rsvpId, title: schema.books.title })
+    .from(schema.rsvpBooks)
+    .innerJoin(schema.books, eq(schema.books.id, schema.rsvpBooks.bookId))
+    .all()
+  const booksByRsvp = new Map<number, string[]>()
+  for (const b of bookRows) {
+    const list = booksByRsvp.get(b.rsvpId) ?? []
+    list.push(b.title)
+    booksByRsvp.set(b.rsvpId, list)
+  }
 
   const header = [
     'Імʼя', 'Прізвище', 'Присутність', 'Друга половинка', 'З дітьми', 'Кількість дітей',
@@ -43,7 +55,7 @@ export default defineEventHandler((event) => {
     r.childrenCount,
     r.wantsToast ? 'Так' : 'Ні',
     r.allergies ?? '',
-    r.giftBookTitle ?? '',
+    (booksByRsvp.get(r.id) ?? []).join(', '),
     r.comment ?? '',
     r.createdAt,
   ].map(csvCell).join(','))

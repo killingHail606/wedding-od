@@ -203,6 +203,8 @@ function removeAt<T>(arr: T[], i: number) {
           <AdminField v-model="model.rsvp.deadline" label="Дедлайн RSVP (2026-09-01)" />
           <AdminField v-model="model.rsvp.deadlineLabel" label="Підпис дедлайну" />
           <AdminField v-model="model.rsvp.closedMessage" label="Текст після дедлайну" textarea class="sm:col-span-2" />
+          <AdminField v-model="model.rsvp.giftQuestion" label="Питання про подарунок-книгу (у формі)" class="sm:col-span-2" />
+          <AdminField v-model="model.rsvp.giftHint" label="Підказка під питанням про книгу" textarea class="sm:col-span-2" />
         </div>
       </section>
     </div>

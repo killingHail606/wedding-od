@@ -74,12 +74,16 @@ const { direction } = useSwipe(stage, {
           <Icon name="ph:caret-left" class="h-8 w-8" />
         </button>
 
-        <div ref="stage" class="flex max-h-[86svh] max-w-[92vw] items-center justify-center px-2">
+        <div
+          ref="stage"
+          class="flex h-[86svh] w-[92vw] items-center justify-center px-2"
+          @click.self="emit('close')"
+        >
           <NuxtImg
             :key="current.src"
             :src="current.src"
             :alt="current.alt"
-            class="max-h-[86svh] max-w-full rounded-sm object-contain shadow-2xl"
+            class="max-h-full max-w-full rounded-sm object-contain shadow-2xl"
             sizes="92vw"
           />
         </div>
