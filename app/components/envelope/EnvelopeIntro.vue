@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { useReducedMotion } from '@vueuse/motion'
 
-defineProps<{
+const props = defineProps<{
   coupleName: string
   dateLabel: string
   guestName?: string | null
+  partnerName?: string | null
 }>()
+
+// For couple invitations, greet both by name.
+const displayGuest = computed(() =>
+  props.partnerName
+    ? `${props.guestName} та ${props.partnerName}`
+    : props.guestName,
+)
 
 const emit = defineEmits<{ opened: [] }>()
 
@@ -67,7 +75,7 @@ onUnmounted(() => {
     <div class="mx-auto flex min-h-[100svh] flex-col items-center justify-center gap-10 px-6">
       <Transition name="fade">
         <p v-if="phase === 'idle' && guestName" class="text-center font-serif text-lg text-espresso/70">
-          {{ guestName }}, для вас особисте запрошення
+          {{ displayGuest }}, для вас особисте запрошення
         </p>
       </Transition>
 
