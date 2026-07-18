@@ -12,18 +12,21 @@ const phoneHref = computed(() => `tel:${footer.value.phone.replace(/\s/g, '')}`)
 
 <template>
   <footer class="relative overflow-hidden border-t border-olive-200/60 text-ivory">
-    <!-- Background image with dark overlay for legibility -->
+    <!-- Background image with a soft blur + dark overlay for legibility -->
     <div class="absolute inset-0">
       <NuxtImg
         v-if="footer.background"
         :src="footer.background"
         alt=""
         loading="lazy"
-        class="h-full w-full object-cover"
-        sizes="100vw"
+        width="1920"
+        height="1280"
+        class="absolute inset-0 h-full w-full scale-105 object-cover blur-[3px]"
+        style="object-fit: cover"
+        sizes="xs:100vw sm:100vw md:100vw lg:100vw xl:100vw xxl:100vw"
       />
-      <div class="absolute inset-0 bg-espresso/85" />
-      <div class="absolute inset-0 bg-gradient-to-b from-espresso/70 to-espresso/95" />
+      <div class="absolute inset-0 bg-espresso/55" />
+      <div class="absolute inset-0 bg-gradient-to-b from-espresso/45 to-espresso/70" />
     </div>
 
     <div class="container-narrow relative z-10 py-16 text-center">
