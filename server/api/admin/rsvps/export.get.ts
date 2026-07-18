@@ -14,6 +14,9 @@ export default defineEventHandler((event) => {
       firstName: schema.rsvps.firstName,
       lastName: schema.rsvps.lastName,
       attending: schema.rsvps.attending,
+      withPartner: schema.rsvps.withPartner,
+      partnerFirstName: schema.rsvps.partnerFirstName,
+      partnerLastName: schema.rsvps.partnerLastName,
       withChildren: schema.rsvps.withChildren,
       childrenCount: schema.rsvps.childrenCount,
       wantsToast: schema.rsvps.wantsToast,
@@ -28,13 +31,14 @@ export default defineEventHandler((event) => {
     .all()
 
   const header = [
-    'Імʼя', 'Прізвище', 'Присутність', 'З дітьми', 'Кількість дітей',
+    'Імʼя', 'Прізвище', 'Присутність', 'Друга половинка', 'З дітьми', 'Кількість дітей',
     'Тост', 'Алергії', 'Книга', 'Коментар', 'Дата',
   ]
   const lines = rows.map(r => [
     r.firstName,
     r.lastName,
     r.attending ? 'Так' : 'Ні',
+    r.withPartner ? `${r.partnerFirstName ?? ''} ${r.partnerLastName ?? ''}`.trim() : '',
     r.withChildren ? 'Так' : 'Ні',
     r.childrenCount,
     r.wantsToast ? 'Так' : 'Ні',

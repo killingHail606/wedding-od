@@ -31,7 +31,7 @@ const event = computed(() => content.value.event)
     <div class="container-page relative z-10 flex flex-col items-center text-center text-ivory">
       <RevealOnScroll class="w-full" :y="16">
         <p v-if="guest" class="mb-6 font-sans text-sm tracking-[0.2em] text-ivory/80 uppercase">
-          {{ guest.firstName }}, ми запрошуємо вас
+          {{ guest.partnerFirstName ? `${guest.firstName} та ${guest.partnerFirstName}` : guest.firstName }}, ми запрошуємо вас
         </p>
         <p class="eyebrow !text-ivory/75">
           {{ hero.kicker }}

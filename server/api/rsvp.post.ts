@@ -12,6 +12,9 @@ const rsvpSchema = z.object({
   wantsToast: z.boolean().default(false),
   allergies: z.string().trim().max(500).optional(),
   comment: z.string().trim().max(1000).optional(),
+  withPartner: z.boolean().default(false),
+  partnerFirstName: z.string().trim().max(80).optional(),
+  partnerLastName: z.string().trim().max(80).optional(),
   giftBookId: z.number().int().positive().nullish(),
 })
 
@@ -29,6 +32,13 @@ export default defineEventHandler(async (event) => {
 
   const input = parsed.data
   const childrenCount = input.attending && input.withChildren ? input.childrenCount : 0
+
+  // Partner only counts when attending and a name was provided.
+  const withPartner = Boolean(
+    input.attending && input.withPartner && input.partnerFirstName,
+  )
+  const partnerFirstName = withPartner ? input.partnerFirstName! : null
+  const partnerLastName = withPartner ? input.partnerLastName || null : null
 
   // Link to a guest if a valid token was provided.
   const guest = input.guestToken ? getGuestByToken(input.guestToken) : undefined
@@ -71,6 +81,9 @@ export default defineEventHandler(async (event) => {
       wantsToast: input.attending ? input.wantsToast : false,
       allergies: input.allergies || null,
       comment: input.comment || null,
+      withPartner,
+      partnerFirstName,
+      partnerLastName,
       giftBookId: giftBook?.id ?? null,
     })
     .returning()
@@ -83,6 +96,7 @@ export default defineEventHandler(async (event) => {
     `${input.firstName} ${input.lastName}`,
     status,
   ]
+  if (withPartner) lines.push(`💑 З партнером: ${partnerFirstName} ${partnerLastName ?? ''}`.trim())
   if (input.attending && input.withChildren) lines.push(`👶 Дітей: ${childrenCount}`)
   if (input.attending && input.wantsToast) lines.push('🎤 Хоче сказати тост')
   if (input.allergies) lines.push(`🍽 Алергії: ${input.allergies}`)

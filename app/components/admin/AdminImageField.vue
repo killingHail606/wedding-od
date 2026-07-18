@@ -34,48 +34,49 @@ async function onSelect(e: Event) {
 </script>
 
 <template>
-  <div class="block">
+  <label class="block">
     <span class="field-label">{{ label }}</span>
 
-    <div class="flex items-start gap-3">
+    <div class="flex items-center gap-2">
       <!-- Preview -->
-      <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-olive-200 bg-olive-50">
+      <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-olive-200 bg-olive-50">
         <img v-if="model" :src="model" alt="" class="h-full w-full object-cover">
         <div v-else class="flex h-full w-full items-center justify-center">
           <Icon name="ph:image" class="h-5 w-5 text-olive-400" />
         </div>
       </div>
 
-      <div class="min-w-0 flex-1">
-        <input
-          v-model="model"
-          :placeholder="placeholder"
-          class="field-input"
-        >
-        <div class="mt-2 flex items-center gap-2">
-          <button
-            type="button"
-            class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100 disabled:opacity-50"
-            :disabled="uploading"
-            @click="input?.click()"
-          >
-            <Icon
-              :name="uploading ? 'ph:spinner' : 'ph:upload-simple'"
-              class="mr-1 inline h-3.5 w-3.5"
-              :class="uploading ? 'animate-spin' : ''"
-            />
-            {{ uploading ? 'Завантаження…' : 'Завантажити файл' }}
-          </button>
-          <span v-if="error" class="text-xs text-red-600">{{ error }}</span>
-        </div>
-        <input
-          ref="input"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="onSelect"
-        >
-      </div>
+      <input
+        v-model="model"
+        :placeholder="placeholder"
+        class="field-input min-w-0 flex-1"
+      >
+
+      <!-- Upload button -->
+      <button
+        type="button"
+        class="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-olive-300 px-3 text-xs font-medium text-olive-700 transition hover:bg-olive-100 disabled:opacity-50"
+        :disabled="uploading"
+        :title="uploading ? 'Завантаження…' : 'Завантажити файл'"
+        @click.prevent="input?.click()"
+      >
+        <Icon
+          :name="uploading ? 'ph:spinner' : 'ph:upload-simple'"
+          class="h-4 w-4"
+          :class="uploading ? 'animate-spin' : ''"
+        />
+        <span class="hidden sm:inline">{{ uploading ? 'Завантаження…' : 'Файл' }}</span>
+      </button>
+
+      <input
+        ref="input"
+        type="file"
+        accept="image/*"
+        class="hidden"
+        @change="onSelect"
+      >
     </div>
-  </div>
+
+    <p v-if="error" class="field-error">{{ error }}</p>
+  </label>
 </template>

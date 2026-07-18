@@ -32,6 +32,8 @@ export default defineEventHandler((event): SiteResponse => {
         firstName: guestRow.firstName,
         lastName: guestRow.lastName,
         invitedToCeremony: guestRow.invitedToCeremony,
+        partnerFirstName: guestRow.partnerFirstName,
+        partnerLastName: guestRow.partnerLastName,
       }
     : null
 

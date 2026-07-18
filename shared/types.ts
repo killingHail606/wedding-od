@@ -138,6 +138,9 @@ export interface GuestPublic {
   firstName: string
   lastName: string
   invitedToCeremony: boolean
+  /** Set when the invitation was created for a couple (shared link). */
+  partnerFirstName: string | null
+  partnerLastName: string | null
 }
 
 export interface RsvpEntry {
@@ -151,6 +154,9 @@ export interface RsvpEntry {
   wantsToast: boolean
   allergies: string | null
   comment: string | null
+  withPartner: boolean
+  partnerFirstName: string | null
+  partnerLastName: string | null
   giftBookId: number | null
   createdAt: string
 }
@@ -166,6 +172,10 @@ export interface RsvpInput {
   wantsToast: boolean
   allergies?: string
   comment?: string
+  /** Whether the guest is bringing their partner, and their name. */
+  withPartner?: boolean
+  partnerFirstName?: string
+  partnerLastName?: string
   /** id of the wishlist book the guest chose to gift, if any. */
   giftBookId?: number | null
 }

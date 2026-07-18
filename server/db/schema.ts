@@ -21,6 +21,9 @@ export const guests = sqliteTable('guests', {
   invitedToCeremony: integer('invited_to_ceremony', { mode: 'boolean' })
     .notNull()
     .default(false),
+  /** Optional partner for a "couple" invitation — shares one link. */
+  partnerFirstName: text('partner_first_name'),
+  partnerLastName: text('partner_last_name'),
   note: text('note'),
   createdAt: text('created_at')
     .notNull()
@@ -61,6 +64,12 @@ export const rsvps = sqliteTable('rsvps', {
     .default(false),
   allergies: text('allergies'),
   comment: text('comment'),
+  /** Whether the guest is bringing their partner, and their name. */
+  withPartner: integer('with_partner', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  partnerFirstName: text('partner_first_name'),
+  partnerLastName: text('partner_last_name'),
   /** The wishlist book this guest chose to gift, if any. */
   giftBookId: integer('gift_book_id').references(() => books.id, {
     onDelete: 'set null',

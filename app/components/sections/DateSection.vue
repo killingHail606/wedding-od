@@ -4,7 +4,7 @@ const event = computed(() => content.value.event)
 const couple = computed(() => content.value.couple)
 const banquet = computed(() => content.value.venue.banquet)
 
-const { googleUrl, downloadIcs } = useAddToCalendar(() => ({
+const { googleUrl } = useAddToCalendar(() => ({
   title: `Весілля · ${couple.value.displayName}`,
   description: 'Запрошуємо вас на наше весілля!',
   location: `${banquet.value.name}, ${banquet.value.address}`,
@@ -44,11 +44,7 @@ const weekday = computed(() =>
         <div class="mt-10 flex flex-col items-center gap-3 sm:flex-row">
           <AppButton as="a" :href="googleUrl" variant="solid">
             <Icon name="ph:google-logo" class="h-4 w-4" />
-            Google Календар
-          </AppButton>
-          <AppButton variant="outline" @click="downloadIcs">
-            <Icon name="ph:calendar-plus" class="h-4 w-4" />
-            Додати в календар (.ics)
+            Додати в Google Календар
           </AppButton>
         </div>
       </RevealOnScroll>

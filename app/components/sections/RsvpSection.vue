@@ -16,6 +16,9 @@ const closed = computed(() => {
   return Date.now() > end.getTime()
 })
 
+// A couple invitation pre-fills the partner from the guest link.
+const knownPartner = computed(() => !!guest.value?.partnerFirstName)
+
 const form = reactive({
   firstName: guest.value?.firstName ?? '',
   lastName: guest.value?.lastName ?? '',
@@ -24,6 +27,9 @@ const form = reactive({
   childrenCount: 1,
   wantsToast: null as boolean | null,
   allergies: '',
+  withPartner: knownPartner.value as boolean,
+  partnerFirstName: guest.value?.partnerFirstName ?? '',
+  partnerLastName: guest.value?.partnerLastName ?? '',
   giftBook: null as boolean | null,
   giftBookId: null as number | null,
   comment: '',
@@ -44,8 +50,13 @@ function validate(): boolean {
   errors.attending = form.attending === null ? 'Оберіть один з варіантів' : ''
   errors.giftBookId
     = form.giftBook === true && !form.giftBookId ? 'Оберіть книгу зі списку' : ''
+  errors.partnerFirstName
+    = form.attending === true && form.withPartner && !form.partnerFirstName.trim()
+      ? 'Вкажіть імʼя другої половинки'
+      : ''
   return (
-    !errors.firstName && !errors.lastName && !errors.attending && !errors.giftBookId
+    !errors.firstName && !errors.lastName && !errors.attending
+    && !errors.giftBookId && !errors.partnerFirstName
   )
 }
 
@@ -63,6 +74,9 @@ async function submit() {
     childrenCount: form.attending && form.withChildren ? form.childrenCount : 0,
     wantsToast: form.attending ? form.wantsToast === true : false,
     allergies: form.allergies.trim() || undefined,
+    withPartner: form.attending ? form.withPartner : false,
+    partnerFirstName: form.attending && form.withPartner ? form.partnerFirstName.trim() : undefined,
+    partnerLastName: form.attending && form.withPartner ? form.partnerLastName.trim() || undefined : undefined,
     comment: form.comment.trim() || undefined,
     giftBookId: form.giftBook === true ? form.giftBookId : null,
   }
@@ -183,6 +197,44 @@ async function submit() {
         <!-- Extra fields only when attending -->
         <Transition name="expand">
           <div v-if="form.attending" class="grid gap-5">
+            <!-- Partner / plus-one -->
+            <div>
+              <div class="flex items-center gap-3">
+                <input
+                  id="withPartner"
+                  v-model="form.withPartner"
+                  type="checkbox"
+                  class="h-4 w-4 accent-olive-600"
+                >
+                <label for="withPartner" class="font-sans text-sm text-cocoa">
+                  {{ knownPartner ? 'Будемо разом із другою половинкою' : 'Буду з другою половинкою' }}
+                </label>
+              </div>
+
+              <div v-if="form.withPartner" class="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label for="partnerFirstName" class="field-label">Імʼя другої половинки</label>
+                  <input
+                    id="partnerFirstName"
+                    v-model="form.partnerFirstName"
+                    class="field-input"
+                    :aria-invalid="!!errors.partnerFirstName"
+                    autocomplete="off"
+                  >
+                  <p v-if="errors.partnerFirstName" class="field-error">{{ errors.partnerFirstName }}</p>
+                </div>
+                <div>
+                  <label for="partnerLastName" class="field-label">Прізвище другої половинки</label>
+                  <input
+                    id="partnerLastName"
+                    v-model="form.partnerLastName"
+                    class="field-input"
+                    autocomplete="off"
+                  >
+                </div>
+              </div>
+            </div>
+
             <div class="flex items-center gap-3">
               <input
                 id="withChildren"
@@ -272,7 +324,8 @@ async function submit() {
                 : 'border-olive-200 bg-ivory/60 text-cocoa hover:border-olive-300'"
               @click="form.giftBook = false"
             >
-              Ні / вирішу пізніше
+              <Icon name="ph:x" class="mr-1 inline h-4 w-4" />
+              На жаль, ні
             </button>
           </div>
 

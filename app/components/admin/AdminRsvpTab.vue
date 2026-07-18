@@ -3,6 +3,11 @@ import type { RsvpRow } from '~~/server/db/schema'
 
 type RsvpWithBook = RsvpRow & { giftBookTitle: string | null }
 
+function partnerName(r: RsvpWithBook) {
+  if (!r.withPartner) return '—'
+  return `${r.partnerFirstName ?? ''} ${r.partnerLastName ?? ''}`.trim() || 'Так'
+}
+
 interface RsvpResponse {
   summary: { total: number, attending: number, declined: number, children: number }
   rsvps: RsvpWithBook[]
@@ -70,6 +75,7 @@ const stats = computed(() => [
           <tr>
             <th class="px-4 py-3">Гість</th>
             <th class="px-4 py-3">Присутність</th>
+            <th class="px-4 py-3">Друга половинка</th>
             <th class="px-4 py-3">Діти</th>
             <th class="px-4 py-3">Тост</th>
             <th class="px-4 py-3">Алергії / харчування</th>
@@ -93,6 +99,7 @@ const stats = computed(() => [
                 {{ r.attending ? 'Буде' : 'Не буде' }}
               </span>
             </td>
+            <td class="px-4 py-3 text-cocoa">{{ partnerName(r) }}</td>
             <td class="px-4 py-3">{{ r.withChildren ? r.childrenCount : '—' }}</td>
             <td class="px-4 py-3">{{ r.attending ? (r.wantsToast ? 'Так' : 'Ні') : '—' }}</td>
             <td class="px-4 py-3 text-cocoa">{{ r.allergies || '—' }}</td>

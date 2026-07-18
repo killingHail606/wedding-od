@@ -6,6 +6,8 @@ const schemaBody = z.object({
   firstName: z.string().trim().min(1).max(80).optional(),
   lastName: z.string().trim().min(1).max(80).optional(),
   invitedToCeremony: z.boolean().optional(),
+  partnerFirstName: z.string().trim().max(80).nullable().optional(),
+  partnerLastName: z.string().trim().max(80).nullable().optional(),
   note: z.string().trim().max(300).nullable().optional(),
 })
 

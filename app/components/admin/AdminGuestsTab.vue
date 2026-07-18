@@ -22,15 +22,45 @@ async function copyLink(guest: GuestRow) {
 }
 
 // Create form
-const draft = reactive({ firstName: '', lastName: '', invitedToCeremony: false, note: '' })
+const draft = reactive({
+  firstName: '',
+  lastName: '',
+  invitedToCeremony: false,
+  isCouple: false,
+  partnerFirstName: '',
+  partnerLastName: '',
+  note: '',
+})
 const creating = ref(false)
+
+function resetDraft() {
+  Object.assign(draft, {
+    firstName: '',
+    lastName: '',
+    invitedToCeremony: false,
+    isCouple: false,
+    partnerFirstName: '',
+    partnerLastName: '',
+    note: '',
+  })
+}
 
 async function create() {
   if (!draft.firstName.trim() || !draft.lastName.trim()) return
   creating.value = true
   try {
-    await $fetch('/api/admin/guests', { method: 'POST', body: { ...draft } })
-    Object.assign(draft, { firstName: '', lastName: '', invitedToCeremony: false, note: '' })
+    await $fetch('/api/admin/guests', {
+      method: 'POST',
+      body: {
+        firstName: draft.firstName,
+        lastName: draft.lastName,
+        invitedToCeremony: draft.invitedToCeremony,
+        note: draft.note,
+        partnerFirstName: draft.isCouple ? draft.partnerFirstName : '',
+        partnerLastName: draft.isCouple ? draft.partnerLastName : '',
+      },
+    })
+    resetDraft()
     await refresh()
   }
   finally {
@@ -59,20 +89,33 @@ async function remove(guest: GuestRow) {
 
     <!-- Create -->
     <form
-      class="mb-8 grid gap-4 rounded-xl border border-olive-200 bg-ivory p-5 sm:grid-cols-2 lg:grid-cols-4"
+      class="mb-8 grid gap-4 rounded-xl border border-olive-200 bg-ivory p-5"
       @submit.prevent="create"
     >
-      <AdminField v-model="draft.firstName" label="Імʼя" placeholder="Ірина" />
-      <AdminField v-model="draft.lastName" label="Прізвище" placeholder="Коваль" />
-      <AdminField v-model="draft.note" label="Примітка (не показується гостю)" placeholder="Напр. родичі" />
-      <div class="flex flex-col justify-end gap-3">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <AdminField v-model="draft.firstName" label="Імʼя" placeholder="Ірина" />
+        <AdminField v-model="draft.lastName" label="Прізвище" placeholder="Коваль" />
+        <AdminField v-model="draft.note" label="Примітка (не показується гостю)" placeholder="Напр. родичі" />
+      </div>
+
+      <label class="flex items-center gap-2 text-sm text-cocoa">
+        <input v-model="draft.isCouple" type="checkbox" class="h-4 w-4 accent-olive-600">
+        Запрошення для двох (з другою половинкою)
+      </label>
+
+      <div v-if="draft.isCouple" class="grid gap-4 rounded-lg bg-olive-50 p-4 sm:grid-cols-2">
+        <AdminField v-model="draft.partnerFirstName" label="Імʼя другої половинки" placeholder="Андрій" />
+        <AdminField v-model="draft.partnerLastName" label="Прізвище другої половинки" placeholder="Коваль" />
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <label class="flex items-center gap-2 text-sm text-cocoa">
           <input v-model="draft.invitedToCeremony" type="checkbox" class="h-4 w-4 accent-olive-600">
-          Запрошений(-а) на церемонію
+          Запрошений(-і) на церемонію
         </label>
-        <AppButton type="submit" :disabled="creating" block>
+        <AppButton type="submit" :disabled="creating">
           <Icon name="ph:plus" class="h-4 w-4" />
-          Додати гостя
+          Додати {{ draft.isCouple ? 'пару' : 'гостя' }}
         </AppButton>
       </div>
     </form>
@@ -92,6 +135,14 @@ async function remove(guest: GuestRow) {
         <div class="min-w-0">
           <p class="font-medium">
             {{ g.firstName }} {{ g.lastName }}
+            <span
+              v-if="g.partnerFirstName"
+              class="ml-1 text-cocoa"
+            >&amp; {{ g.partnerFirstName }} {{ g.partnerLastName }}</span>
+            <span
+              v-if="g.partnerFirstName"
+              class="ml-2 rounded-full bg-blush/40 px-2 py-0.5 text-xs text-espresso"
+            >пара</span>
             <span
               v-if="g.invitedToCeremony"
               class="ml-2 rounded-full bg-olive-100 px-2 py-0.5 text-xs text-olive-700"
