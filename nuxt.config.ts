@@ -54,6 +54,9 @@ export default defineNuxtConfig({
     // Remote hosts @nuxt/image is allowed to optimize. Without this an external
     // URL yields a degenerate `1w, 2w` srcset and no intrinsic aspect ratio,
     // which makes iOS Safari ignore object-fit and stretch the hero image.
+    // Uploaded images are served from our own /uploads route as absolute URLs;
+    // by NOT allow-listing our host they pass through @nuxt/image unoptimized
+    // (served straight from the volume) instead of being routed through ipx.
     domains: ['images.unsplash.com'],
   },
 

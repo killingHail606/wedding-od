@@ -18,8 +18,9 @@ RUN pnpm build
 ENV NODE_ENV=production
 ENV NITRO_PORT=3000
 ENV NITRO_HOST=0.0.0.0
-# SQLite lives on a mounted volume in production (see README).
+# SQLite + uploaded images live on a mounted volume in production (see README).
 ENV NUXT_DATABASE_URL=/data/wedding.db
+ENV NUXT_UPLOADS_DIR=/data/uploads
 
 EXPOSE 3000
 

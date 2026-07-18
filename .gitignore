@@ -17,6 +17,9 @@ server/db/data/*.db
 server/db/data/*.db-*
 *.sqlite
 
+# Uploaded images (stored on the volume in prod)
+server/db/data/uploads/
+
 # Logs & OS
 *.log
 .DS_Store

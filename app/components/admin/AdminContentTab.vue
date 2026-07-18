@@ -46,7 +46,7 @@ function removeAt<T>(arr: T[], i: number) {
     <div class="mb-6 flex items-center justify-between">
       <h2 class="font-serif text-2xl">Контент сайту</h2>
       <p class="text-sm text-cocoa">
-        Фото завантажуйте у <code class="rounded bg-olive-100 px-1">/public/images</code> та вказуйте шлях нижче.
+        Завантажуйте фото кнопкою «Завантажити файл» або вкажіть URL.
       </p>
     </div>
 
@@ -68,7 +68,7 @@ function removeAt<T>(arr: T[], i: number) {
       <section class="rounded-xl border border-olive-200 bg-ivory p-6">
         <h3 class="mb-4 font-serif text-lg">Головний екран (Hero)</h3>
         <div class="grid gap-4">
-          <AdminField v-model="model.hero.photo" label="Фото (шлях)" placeholder="/images/hero.jpg" />
+          <AdminImageField v-model="model.hero.photo" label="Фото" placeholder="/images/hero.jpg або URL" />
           <AdminField v-model="model.hero.kicker" label="Надпис зверху" />
           <AdminField v-model="model.hero.invitationLine" label="Короткий текст запрошення" textarea />
         </div>
@@ -84,9 +84,9 @@ function removeAt<T>(arr: T[], i: number) {
           <div
             v-for="(photo, i) in model.gallery"
             :key="i"
-            class="grid items-end gap-3 rounded-lg bg-olive-50 p-3 sm:grid-cols-[1fr_1fr_auto_auto]"
+            class="grid items-end gap-3 rounded-lg bg-olive-50 p-3 sm:grid-cols-[2fr_1fr_auto_auto]"
           >
-            <AdminField v-model="photo.src" label="Шлях" placeholder="/images/gallery-1.jpg" />
+            <AdminImageField v-model="photo.src" label="Зображення" placeholder="/images/gallery-1.jpg або URL" />
             <AdminField v-model="photo.alt" label="Опис (alt)" />
             <label class="block">
               <span class="field-label">Формат</span>
@@ -199,7 +199,7 @@ function removeAt<T>(arr: T[], i: number) {
           <AdminField v-model="model.footer.phone" label="Телефон" />
           <AdminField v-model="model.footer.telegram" label="Telegram (@…)" />
           <AdminField v-model="model.footer.thankYou" label="Текст подяки" textarea />
-          <AdminField v-model="model.footer.background" label="Фонове зображення футера (URL або /images/…)" class="sm:col-span-2" />
+          <AdminImageField v-model="model.footer.background" label="Фонове зображення футера" placeholder="URL або /images/…" class="sm:col-span-2" />
           <AdminField v-model="model.rsvp.deadline" label="Дедлайн RSVP (2026-09-01)" />
           <AdminField v-model="model.rsvp.deadlineLabel" label="Підпис дедлайну" />
           <AdminField v-model="model.rsvp.closedMessage" label="Текст після дедлайну" textarea class="sm:col-span-2" />
