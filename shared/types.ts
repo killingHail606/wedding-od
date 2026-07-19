@@ -145,6 +145,8 @@ export interface GuestPublic {
   /** Set when the invitation was created for a couple (shared link). */
   partnerFirstName: string | null
   partnerLastName: string | null
+  /** Personal background image for the invitation card (envelope intro). */
+  envelopeImage: string | null
 }
 
 export interface RsvpEntry {

@@ -8,6 +8,7 @@ const schemaBody = z.object({
   invitedToCeremony: z.boolean().optional(),
   partnerFirstName: z.string().trim().max(80).nullable().optional(),
   partnerLastName: z.string().trim().max(80).nullable().optional(),
+  envelopeImage: z.string().trim().max(1000).nullable().optional(),
   note: z.string().trim().max(300).nullable().optional(),
 })
 

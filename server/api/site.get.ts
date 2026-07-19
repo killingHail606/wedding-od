@@ -34,6 +34,7 @@ export default defineEventHandler((event): SiteResponse => {
         invitedToCeremony: guestRow.invitedToCeremony,
         partnerFirstName: guestRow.partnerFirstName,
         partnerLastName: guestRow.partnerLastName,
+        envelopeImage: guestRow.envelopeImage,
       }
     : null
 

@@ -29,6 +29,7 @@ const draft = reactive({
   isCouple: false,
   partnerFirstName: '',
   partnerLastName: '',
+  envelopeImage: '',
   note: '',
 })
 const creating = ref(false)
@@ -41,6 +42,7 @@ function resetDraft() {
     isCouple: false,
     partnerFirstName: '',
     partnerLastName: '',
+    envelopeImage: '',
     note: '',
   })
 }
@@ -58,6 +60,7 @@ async function create() {
         note: draft.note,
         partnerFirstName: draft.isCouple ? draft.partnerFirstName : '',
         partnerLastName: draft.isCouple ? draft.partnerLastName : '',
+        envelopeImage: draft.envelopeImage,
       },
     })
     resetDraft()
@@ -65,6 +68,35 @@ async function create() {
   }
   finally {
     creating.value = false
+  }
+}
+
+// Per-guest envelope image editor (for already-created invitations)
+const imageEditId = ref<number | null>(null)
+const imageDraft = ref('')
+const savingImage = ref(false)
+
+function toggleImageEditor(guest: GuestRow) {
+  if (imageEditId.value === guest.id) {
+    imageEditId.value = null
+    return
+  }
+  imageEditId.value = guest.id
+  imageDraft.value = guest.envelopeImage ?? ''
+}
+
+async function saveImage(guest: GuestRow) {
+  savingImage.value = true
+  try {
+    await $fetch(`/api/admin/guests/${guest.id}`, {
+      method: 'PATCH',
+      body: { envelopeImage: imageDraft.value.trim() || null },
+    })
+    imageEditId.value = null
+    await refresh()
+  }
+  finally {
+    savingImage.value = false
   }
 }
 
@@ -108,6 +140,12 @@ async function remove(guest: GuestRow) {
         <AdminField v-model="draft.partnerLastName" label="Прізвище другої половинки" placeholder="Коваль" />
       </div>
 
+      <AdminImageField
+        v-model="draft.envelopeImage"
+        label="Фонове фото листівки (необовʼязково)"
+        placeholder="https://…"
+      />
+
       <div class="flex flex-wrap items-center justify-between gap-3">
         <label class="flex items-center gap-2 text-sm text-cocoa">
           <input v-model="draft.invitedToCeremony" type="checkbox" class="h-4 w-4 accent-olive-600">
@@ -130,47 +168,84 @@ async function remove(guest: GuestRow) {
       <li
         v-for="g in guests"
         :key="g.id"
-        class="flex flex-col gap-3 rounded-xl border border-olive-200 bg-ivory p-4 sm:flex-row sm:items-center sm:justify-between"
+        class="rounded-xl border border-olive-200 bg-ivory p-4"
       >
-        <div class="min-w-0">
-          <p class="font-medium">
-            {{ g.firstName }} {{ g.lastName }}
-            <span
-              v-if="g.partnerFirstName"
-              class="ml-1 text-cocoa"
-            >&amp; {{ g.partnerFirstName }} {{ g.partnerLastName }}</span>
-            <span
-              v-if="g.partnerFirstName"
-              class="ml-2 rounded-full bg-blush/40 px-2 py-0.5 text-xs text-espresso"
-            >пара</span>
-            <span
-              v-if="g.invitedToCeremony"
-              class="ml-2 rounded-full bg-olive-100 px-2 py-0.5 text-xs text-olive-700"
-            >церемонія</span>
-          </p>
-          <p v-if="g.note" class="text-xs text-cocoa">{{ g.note }}</p>
-          <p class="mt-1 truncate font-mono text-xs text-cocoa/80">{{ guestLink(g.token) }}</p>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <img
+              v-if="g.envelopeImage"
+              :src="g.envelopeImage"
+              alt=""
+              class="h-11 w-11 shrink-0 rounded-lg border border-olive-200 object-cover"
+            >
+            <div class="min-w-0">
+              <p class="font-medium">
+                {{ g.firstName }} {{ g.lastName }}
+                <span
+                  v-if="g.partnerFirstName"
+                  class="ml-1 text-cocoa"
+                >&amp; {{ g.partnerFirstName }} {{ g.partnerLastName }}</span>
+                <span
+                  v-if="g.partnerFirstName"
+                  class="ml-2 rounded-full bg-blush/40 px-2 py-0.5 text-xs text-espresso"
+                >пара</span>
+                <span
+                  v-if="g.invitedToCeremony"
+                  class="ml-2 rounded-full bg-olive-100 px-2 py-0.5 text-xs text-olive-700"
+                >церемонія</span>
+              </p>
+              <p v-if="g.note" class="text-xs text-cocoa">{{ g.note }}</p>
+              <p class="mt-1 truncate font-mono text-xs text-cocoa/80">{{ guestLink(g.token) }}</p>
+            </div>
+          </div>
+
+          <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
+              @click="copyLink(g)"
+            >
+              {{ copiedId === g.id ? 'Скопійовано ✓' : 'Копіювати лінк' }}
+            </button>
+            <button
+              class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
+              @click="toggleCeremony(g)"
+            >
+              {{ g.invitedToCeremony ? 'Прибрати церемонію' : 'Додати церемонію' }}
+            </button>
+            <button
+              class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
+              @click="toggleImageEditor(g)"
+            >
+              {{ imageEditId === g.id ? 'Сховати фото' : (g.envelopeImage ? 'Змінити фото' : 'Додати фото') }}
+            </button>
+            <button
+              class="rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30"
+              @click="remove(g)"
+            >
+              Видалити
+            </button>
+          </div>
         </div>
 
-        <div class="flex shrink-0 flex-wrap items-center gap-2">
-          <button
-            class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
-            @click="copyLink(g)"
-          >
-            {{ copiedId === g.id ? 'Скопійовано ✓' : 'Копіювати лінк' }}
-          </button>
-          <button
-            class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
-            @click="toggleCeremony(g)"
-          >
-            {{ g.invitedToCeremony ? 'Прибрати церемонію' : 'Додати церемонію' }}
-          </button>
-          <button
-            class="rounded-full border border-blush px-3 py-1.5 text-xs text-espresso transition hover:bg-blush/30"
-            @click="remove(g)"
-          >
-            Видалити
-          </button>
+        <div v-if="imageEditId === g.id" class="mt-3 grid gap-3 rounded-lg bg-olive-50 p-4">
+          <AdminImageField
+            v-model="imageDraft"
+            label="Фонове фото листівки"
+            placeholder="https://…"
+          />
+          <div class="flex flex-wrap items-center gap-2">
+            <AppButton :disabled="savingImage" @click="saveImage(g)">
+              Зберегти
+            </AppButton>
+            <button
+              v-if="imageDraft"
+              class="rounded-full border border-olive-300 px-3 py-1.5 text-xs text-olive-700 transition hover:bg-olive-100"
+              :disabled="savingImage"
+              @click="imageDraft = ''"
+            >
+              Прибрати фото
+            </button>
+          </div>
         </div>
       </li>
     </ul>

@@ -6,6 +6,8 @@ const props = defineProps<{
   dateLabel: string
   guestName?: string | null
   partnerName?: string | null
+  /** Personal background photo for the invitation card. */
+  backgroundImage?: string | null
 }>()
 
 // For couple invitations, greet both by name.
@@ -72,7 +74,16 @@ onUnmounted(() => {
 
 <template>
   <div class="envelope-overlay" :class="{ 'is-leaving': phase === 'leaving' }">
-    <div class="mx-auto flex min-h-[100svh] flex-col items-center justify-center gap-10 px-6">
+    <!-- Personal photo as the page background, softened by a paper-toned
+         veil so the envelope and text stay legible. -->
+    <div
+      v-if="backgroundImage"
+      class="overlay-photo"
+      :style="{ backgroundImage: `url(${backgroundImage})` }"
+      aria-hidden="true"
+    />
+
+    <div class="relative mx-auto flex min-h-[100svh] flex-col items-center justify-center gap-10 px-6">
       <Transition name="fade">
         <p v-if="phase === 'idle' && guestName" class="text-center font-serif text-lg text-espresso/70">
           {{ displayGuest }}, для вас особисте запрошення
@@ -272,6 +283,26 @@ onUnmounted(() => {
   opacity: 0;
   filter: blur(6px);
   pointer-events: none;
+}
+
+/* --- Personal background photo --------------------------------------- */
+.overlay-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+/* paper-toned veil over the photo, matching the default backdrop */
+.overlay-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    135% 105% at 50% 16%,
+    rgba(255, 253, 246, 0.78) 0%,
+    rgba(247, 239, 220, 0.62) 52%,
+    rgba(236, 223, 198, 0.72) 100%
+  );
 }
 
 .stage {

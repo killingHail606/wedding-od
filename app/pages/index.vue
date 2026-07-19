@@ -57,6 +57,7 @@ useSeoMeta({
         :date-label="content.event.dateLabel"
         :guest-name="guest?.firstName"
         :partner-name="guest?.partnerFirstName"
+        :background-image="guest?.envelopeImage"
         @opened="showEnvelope = false"
       />
 

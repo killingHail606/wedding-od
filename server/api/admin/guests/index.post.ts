@@ -8,6 +8,7 @@ const schemaBody = z.object({
   invitedToCeremony: z.boolean().default(false),
   partnerFirstName: z.string().trim().max(80).optional(),
   partnerLastName: z.string().trim().max(80).optional(),
+  envelopeImage: z.string().trim().max(1000).optional(),
   note: z.string().trim().max(300).optional(),
 })
 
@@ -29,6 +30,7 @@ export default defineEventHandler(async (event) => {
       invitedToCeremony: parsed.data.invitedToCeremony,
       partnerFirstName: parsed.data.partnerFirstName || null,
       partnerLastName: parsed.data.partnerLastName || null,
+      envelopeImage: parsed.data.envelopeImage || null,
       note: parsed.data.note || null,
     })
     .returning()

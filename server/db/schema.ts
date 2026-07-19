@@ -24,6 +24,8 @@ export const guests = sqliteTable('guests', {
   /** Optional partner for a "couple" invitation — shares one link. */
   partnerFirstName: text('partner_first_name'),
   partnerLastName: text('partner_last_name'),
+  /** Optional background image for this guest's invitation card (envelope intro). */
+  envelopeImage: text('envelope_image'),
   note: text('note'),
   createdAt: text('created_at')
     .notNull()
